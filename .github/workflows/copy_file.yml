@@ -1,0 +1,30 @@
+name: Copy File
+
+on:
+  schedule:
+    - cron: '0 0 1,15 * *'  # 在每个月的1号和15号的零点触发
+
+jobs:
+  copy-file:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout pcr-wiki repository
+      uses: actions/checkout@v2
+      with:
+        repository: aJacke/pcr-wiki
+        ref: main
+
+    - name: Copy _pcr_data.py from LandosolRoster
+      run: |
+        mkdir -p pcr-wiki/spider
+        curl -o pcr-wiki/spider/_pcr_data.py -L https://raw.githubusercontent.com/aJacke/LandosolRoster/main/_pcr_data.py
+      working-directory: ${{ github.workspace }}
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Copy _pcr_data.py from LandosolRoster"
+        git push
