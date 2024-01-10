@@ -1,8 +1,7 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from datetime import datetime
+import pyppeteer
+from pyppeteer import launch
 from zhconv import convert
-from Fetch import fetch
+import asyncio
 from data import *
 import _pcr_data
 
@@ -13,106 +12,167 @@ UnavailableChara = {
     1072,   # 可萝爹
     1073,   # 拉基拉基
     1102,   # 泳装大眼
+    1183,   # 初音(初音&栞)
+    1184,   # 栞(初音&栞)
+    1204,   # 美美(小小甜心)
+    1205,   # 禊(小小甜心) 
+    1206,   # 镜华(小小甜心)
+    1217,   # 秋乃(秋乃&咲恋)
+    1218,   # 咲恋(秋乃&咲恋)
     1908,
     4031,
     9000,
     9401,
 }
 
-start = datetime.now()
-path = 'C:\\Users\cwx_x\Documents\workSpace\python\pcr_wiki\spider\chromedriver.exe'#此处更改为你存放chromedriver的地址
-opt = Options()
-opt.add_argument('--headless')
-opt.add_argument('--disk-cache-dir=C:\\Users\cwx_x\Documents\workSpace\python\pcr_wiki\spider\cache')#此处更改为你想存放缓存的地址
-opt.add_argument('–disk-cache-size=134217728')#缓存最大128Mb
-opt.add_argument('--disable-javascript')
-opt.add_argument('--disable-images')
-opt.add_argument('--disable-plugins')
-opt.add_argument('--ignore-certificate-errors') #忽略证书错误
-opt.add_argument('--ignore-ssl-errors') #忽略证书错误
-driver = webdriver.Chrome(executable_path=path, options=opt)
+# 改这里控制爬虫范围
+head = 1223
+end = 1299
 
-try:
+async def find_td_text_by_th_text(page, text_to_find):
+    # 使用JavaScript来查找包含特定文本的<th>元素
+    th_element = await page.evaluateHandle('''(textToFind) => {
+        const thElements = document.querySelectorAll('th');
+        for (const th of thElements) {
+            if (th.textContent.trim() === textToFind) {
+                return th;
+            }
+        }
+        return null;
+    }''', text_to_find)
+
+    if th_element:
+        # 找到包含特定标题的<th>元素，然后找到其父级<tr>元素
+        tr_element = await page.evaluateHandle('(th) => th.closest("tr")', th_element)
+        
+        if tr_element:
+            # 找到<tr>元素后，可以继续查找包含内容的<td>元素
+            td_element = await page.evaluateHandle('(tr) => tr.querySelector("td").textContent', tr_element)
+
+            if td_element:
+                # 如果找到<td>元素，获取其文本内容
+                td_text = await td_element.jsonValue()
+                return td_text
+    return None
+
+async def extract_text_after_heading(page, heading_text):
+    # 使用XPath来定位包含指定标题文本的元素
+    heading_element = await page.xpath(f'//h3[contains(text(), "{heading_text}")]')
+
+    if heading_element:
+        # 如果找到包含指定标题文本的元素，使用page.evaluate来获取文本内容
+        extracted_text = await page.evaluate('(element) => element.nextSibling.textContent.trim()', heading_element[0])
+
+        if extracted_text:
+            return extracted_text
+    return None
+
+async def extract_skill_icons_text(page, section_heading):
+    result = []  # 创建一个空列表，用于存储提取的文本
+    
+    # 使用XPath来定位包含指定标题文本的元素
+    heading_element = await page.xpath(f'//h4[contains(text(), "{section_heading}")]')
+
+    if heading_element:
+        # 找到包含指定标题文本的元素后，获取其父元素
+        parent_element = await heading_element[0].getProperty('parentNode')
+        
+        if parent_element:
+            # 在父元素下查找包含图片名称的所有img元素
+            image_elements = await parent_element.xpath('.//img[starts-with(@src, "/static/images/skill/icon_skill_")]')
+            
+            if image_elements:
+                # 提取每个图片名称中的文本，并添加到列表中
+                for img_element in image_elements:
+                    src_attribute = await img_element.getProperty('src')
+                    image_src = await src_attribute.jsonValue()
+                    text = image_src.split('icon_skill_')[1].split('.png')[0]
+                    result.append(text)  # 添加到列表中
+            else:
+                print("No skill icons found")
+        else:
+            print(f"Parent element not found for '{section_heading}'")
+    else:
+        print(f"Element with '{section_heading}' not found")
+    
+    return result  # 返回存储的结果列表
+
+async def chara_data(page, idx, name):
+    guild = await find_td_text_by_th_text(page, "公會")
+    birthday = await find_td_text_by_th_text(page, "生日")
+    age = await find_td_text_by_th_text(page, "年齡")
+    height = await find_td_text_by_th_text(page, "身高")
+    weight = await find_td_text_by_th_text(page, "體重")
+    blood_type = await find_td_text_by_th_text(page, "血型")
+    race = await find_td_text_by_th_text(page, "種族")
+    hobby = await find_td_text_by_th_text(page, "喜好")
+    cv = await find_td_text_by_th_text(page, "聲優")
+    introduce = await extract_text_after_heading(page, "簡介")
+    start = await extract_skill_icons_text(page, '起手')
+    loop = await extract_skill_icons_text(page, '循環')
+
+    month, day = birthday.split(" / ")
+    birthday = f"{month}月{day}日"
+
+    Info.replace(
+        id=idx,
+        name = name,
+        guild = guild,
+        birthday = birthday,
+        age = age,
+        height = height,
+        weight = weight,
+        blood_type = blood_type,
+        race = race,
+        hobby = hobby,
+        cv = cv,
+        introduce = introduce,
+        start = ','.join(start),
+        loop = ','.join(loop),
+    ).execute()
+
+def tw_name_replace(name):
+    if "時間旅行" in name:
+        name = name.replace("時間旅行", "時空旅行")
+    if "作業服" in name:
+        name = name.replace("作業服", "工作服") # 哪个小可爱给他翻成作业服的，我给你上个buff
+    if "貪喫佩可" in name:
+        name = name.replace("喫", "吃") # 逆天转换
+    if "舞臺" in name:
+        name = name.replace("臺", "台")
+    if "斑比" in name:
+        name = name.replace("斑", "班")
+    return name
+
+async def main():
+    browser = await launch(devtools=True, args=['--disable-popup-blocking'])
+    page = await browser.newPage()
     for idx, names in _pcr_data.CHARA_NAME.items():
-        if idx >= 1801 and idx <= 1806 and idx not in UnavailableChara:# 批量更新，自行替换为更新范围
+        if idx >= head   and idx <= end and idx not in UnavailableChara:# 批量更新，自行替换为更新范围
         # if idx == 1156 and idx not in UnavailableChara:# 单条更新，此处数字更改为想要爬取的角色id
             name_zh = names[0].replace('(','（').replace(')','）')
             name = convert(f'{name_zh}', 'zh-hant').replace('憐','怜')
             # 特殊：怜（萬聖節）
-            driver.get(f'https://pcredivewiki.tw/Character/Detail/{name}')
-
-            print(driver.title)
-            if("undefined" in driver.title ):
-                driver.get(f'https://pcredivewiki.tw/Character/Detail/{name_zh}')
-                print(driver.title)
-                if("undefined" in driver.title ):
-                    name_jp = names[1].replace('(','（').replace(')','）')
-                    driver.get(f'https://pcredivewiki.tw/Character/Detail/{name_jp}')
-                    print(driver.title)
-
-            info = fetch(driver)
-
-            Info.replace(
-                id=idx,
-                name=info['info']['name'],
-                guild = info['info']['guild'],
-                birthday = info['info']['birthday'],
-                age = info['info']['age'],
-                height = info['info']['height'],
-                weight = info['info']['weight'],
-                blood_type = info['info']['blood_type'],
-                race = info['info']['race'],
-                hobby = info['info']['hobby'],
-                cv = info['info']['cv'],
-                introduce = info['info']['introduce'],
-                start = ','.join(info['pattern']['start']),
-                loop = ','.join(info['pattern']['loop']),
-            ).execute()
-
-            for skill in info['skill']:
-                Skill.replace(
-                    id=idx,
-                    name = skill['skill_name'],
-                    type = skill['skill_type'],
-                    description = skill['description'],
-                    num = skill['skill_num'],
-                    effect = skill['skill_effect'],
-                ).execute()
+            name = tw_name_replace(name)
             
-            Kizuna.delete().where(Kizuna.id == idx).execute()
-            for i in info['kizuna']:
-                for j in info['kizuna'][i]:
-                    Kizuna.replace(
-                        id=idx,
-                        name = i,
-                        episode = j,
-                        effect = info['kizuna'][i][j],
-                    ).execute()
+            url = f'https://pcredivewiki.tw/Character/Detail/{name}'
+            await page.goto(url, {'waitUntil': 'domcontentloaded'})
+            await asyncio.sleep(20)
 
-            if('uniquei' in info.keys()):
-                Uniquei.delete().where(Uniquei.id == idx).execute()
-                Uniquei.replace(
-                    id = idx,
-                    name = info['uniquei']['name'],
-                    num = info['uniquei']['weapon_num'],
-                    description = info['uniquei']['description'],
-                ).execute()
+            title = await page.title()
+            if "undefined" in title:
+                url = f'https://pcredivewiki.tw/Character/Detail/{name_zh}'
+                await page.goto(url, {'waitUntil': 'domcontentloaded'})
+                await asyncio.sleep(20)
+                title = page.title()
+                if "undefined" in title:
+                    name_jp = names[1].replace('(','（').replace(')','）')
+                    url = f'https://pcredivewiki.tw/Character/Detail/{name_jp}'
+                    await page.goto(url, {'waitUntil': 'domcontentloaded'})
+                    await asyncio.sleep(20)
+                    print(page.title())
 
-                for prop in info['uniquei']['props']:
-                    Props.replace(
-                        id = idx,
-                        property = prop['property'],
-                        base_value = prop['base_value'],
-                        max_value = prop['max_value'],
-                    ).execute()
+            await chara_data(page, idx, name)
 
-            time = datetime.now()
-            t = time - start
-            print(f'用时：{t}，已更新编号{idx}{name_zh}角色数据')
-        # else:
-            # print('跳过npc角色')
-except Exception as ex:
-    print(ex)
-    print('更新出错')
-finally:
-    driver.quit()
+
+asyncio.get_event_loop().run_until_complete(main())
