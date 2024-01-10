@@ -4,7 +4,7 @@
 
 数据搬运于[蘭德索爾圖書館](https://pcredivewiki.tw/)，图片资源来源[干炸里脊资源站](https://redive.estertion.win/)
 
-fork于https://github.com/pcrbot/pcr-wiki，由ai辅助重构爬虫，目前还没重构完
+fork于[pcr-wiki插件](https://github.com/pcrbot/pcr-wiki)，由ai辅助重构爬虫，目前还没重构完
 
 ## 功能
 
