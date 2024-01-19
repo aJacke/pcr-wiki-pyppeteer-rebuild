@@ -10,10 +10,8 @@ jobs:
 
     steps:
     - name: Checkout pcr-wiki repository
-      uses: actions/checkout@v2
-      with:
-        repository: aJacke/pcr-wiki
-        ref: main
+      uses: actions/checkout@v4
+      
 
     - name: Copy _pcr_data.py from LandosolRoster
       run: |
