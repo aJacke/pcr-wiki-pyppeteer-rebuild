@@ -1,6 +1,14 @@
 name: Copy File
 
 on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'
   schedule:
     - cron: '0 0 1,15 * *'  # 在每个月的1号和15号的零点触发
 
