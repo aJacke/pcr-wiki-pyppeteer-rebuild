@@ -24,7 +24,7 @@ jobs:
     - name: Copy _pcr_data.py from LandosolRoster
       run: |
         mkdir -p spider
-        curl -o ./_pcr_data.py -L https://raw.githubusercontent.com/aJacke/LandosolRoster/master/_pcr_data.py
+        curl -o ./spider/_pcr_data.py -L https://raw.githubusercontent.com/aJacke/LandosolRoster/master/_pcr_data.py
       
     - name: add commit
       uses: EndBug/add-and-commit@v9
