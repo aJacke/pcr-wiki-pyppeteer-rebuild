@@ -30,11 +30,5 @@ jobs:
       with:
         message: 'update _pcr_data.py'
         add: './_pcr_data.py'
-          
-    - name: Commit and push changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git commit -m "Copy _pcr_data.py from LandosolRoster"
-        git push
+        cwd: './spider'
+
