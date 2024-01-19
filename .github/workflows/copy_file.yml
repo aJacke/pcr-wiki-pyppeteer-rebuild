@@ -15,13 +15,14 @@ jobs:
 
     - name: Copy _pcr_data.py from LandosolRoster
       run: |
-        mkdir -p pcr-wiki/spider
-        if [ -f "pcr-wiki/spider/_pcr_data.py" ]; then
-         rm "pcr-wiki/spider/_pcr_data.py"
-        fi
         curl -o pcr-wiki/spider/_pcr_data.py -L https://raw.githubusercontent.com/aJacke/LandosolRoster/main/_pcr_data.py
-      working-directory: ${{ github.workspace }}
-
+      
+    - name: add commit
+      uses: EndBug/add-and-commit@v9
+      with:
+        message: 'update _pcr_data.py'
+        add: './_pcr_data.py'
+          
     - name: Commit and push changes
       run: |
         git config --local user.email "action@github.com"
