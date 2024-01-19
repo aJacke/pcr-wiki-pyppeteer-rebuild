@@ -29,6 +29,4 @@ jobs:
       uses: EndBug/add-and-commit@v9
       with:
         message: 'update _pcr_data.py'
-        add: './_pcr_data.py'
-        cwd: './spider'
-
+        add: './spider/_pcr_data.py'
