@@ -4,7 +4,7 @@ from zhconv import convert
 import asyncio
 from data import *
 from Fetch import *
-from twNameRreplace import *
+from twNameReplace import *
 import _pcr_data
 
 UnavailableChara = {
@@ -28,8 +28,8 @@ UnavailableChara = {
 }
 
 # 改这里控制爬虫范围
-head = 1810
-end = 1830
+head = 1275
+end = 1300
 # 让我看看爬虫过程(True/False)
 headless_model = False
 
@@ -59,10 +59,12 @@ async def main():
                     url = f'https://pcredivewiki.tw/Character/Detail/{name_jp}'
                     await page.goto(url, {'waitUntil': 'domcontentloaded'})
                     await asyncio.sleep(20)
-                    print(page.title())
-
-            # await chara_data(page, idx, name)
-            await skill_data(page, idx, name)
+                    ''' 还不确定这个东西能不能用 感觉没起作用
+                    if "undefined" in title:
+                        print("没找到" + name + "的数据。若有需要，请提issue")
+                    '''
+                    await chara_data(page, idx, name)
+                    await skill_data(page, idx, name)
 
 
 asyncio.get_event_loop().run_until_complete(main())

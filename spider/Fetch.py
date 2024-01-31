@@ -94,6 +94,8 @@ async def get_skill_data(page, text, name, key):
         effect_elements = await element[0].xpath('..//div[starts-with(@class,"skill-ef")]/div[starts-with(@class,"mb-2")]')
         for effect_element in effect_elements:
             skill_effect = await effect_element.xpath('./div')
+            if len(skill_effect) == 0: # 检查是否为空
+                continue
             effect = await page.evaluate('(element) => element.innerText', skill_effect[0])
             effects.append(effect)
         return effects
