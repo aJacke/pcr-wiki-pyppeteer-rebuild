@@ -27,6 +27,7 @@ def get_file_md5():
 
 def custom_sorted(x,y):
     order = ['必殺技','必殺技+','技能1','專武強化技能1','技能2','EX技能','EX技能+']
+    # order = ['必殺技', '必殺技+', '技能1', '專武強化技能1', '技能2', '專武強化技能2', 'EX技能', 'EX技能+'] 图书馆好像还没专2技能的数据，先放着
     if order.index(x['type']) < order.index(y['type']):
         return -1
     if order.index(x['type']) > order.index(y['type']):
@@ -72,7 +73,7 @@ def get_icons(arr,size=64,types='skill'):
 
 def get_info(id):
     query = Info.get(Info.id==id)
-    msg = f'\n公會: {query.guild}\n生日: {query.birthday}\n年齡: {query.age}\n身高: {query.height}\n體重: {query.weight}\n血型: {query.blood_type}\n種族: {query.race}\n喜好: {query.hobby}\nCV: {query.cv}\n簡介: {query.introduce}'
+    msg = f'\n屬性: {query.element}\n公會: {query.guild}\n生日: {query.birthday}\n年齡: {query.age}\n身高: {query.height}\n體重: {query.weight}\n血型: {query.blood_type}\n種族: {query.race}\n喜好: {query.hobby}\nCV: {query.cv}\n簡介: {query.introduce}'
     return convert(msg, 'zh-hans')
 
 def get_skill(id):
@@ -161,6 +162,7 @@ db = pw.SqliteDatabase(os.path.join(os.path.dirname(__file__), 'data.db'))
 class Info(pw.Model):
     id = pw.IntegerField()
     name = pw.TextField()
+    element = pw.TextField()
     guild = pw.TextField()
     birthday = pw.TextField()
     age = pw.TextField()
