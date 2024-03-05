@@ -70,6 +70,28 @@ async def extract_skill_icons_text(page, section_heading):
     
     return result  # 返回存储的结果列表
 
+async def get_chara_data(page, text, name, key): # 有剩下的有空在做吧
+    element = await page.xpath(f'//th[text()="{text}"]/..')
+    if len(element) == 0:
+        return 0
+    if key == 'infoelem':
+        infoelem = await element[0].xpath('td/span')
+        infoelem = await page.evaluate('(element) => element.getAttribute("class")', infoelem[0])
+        infoelem = infoelem.split('mx-auto icon icon-ele ')[1]
+        if infoelem == 't1':
+            infoelem = "水"
+        elif infoelem == 't2':
+            infoelem = "火"
+        elif infoelem == 't3':
+            infoelem = "风"
+        elif infoelem == 't4':
+            infoelem = "光"
+        elif infoelem == 't5':
+            infoelem = "暗"
+        else:
+            infoelem = "未知属性"
+        return infoelem
+
 async def get_skill_data(page, text, name, key):
     element = await page.xpath(f'//div[text()="{text}"]/../..')
     if len(element) == 0: # 判断是否有技能信息
@@ -91,17 +113,16 @@ async def get_skill_data(page, text, name, key):
     
     elif key == 'effect':
         effects = []
-        effect_elements = await element[0].xpath('..//div[starts-with(@class,"skill-ef")]/div[starts-with(@class,"mb-2")]')
+        effect_elements = await element[0].xpath('..//div[starts-with(@class,"skill-ef")]/div[starts-with(@class,"mb-2") and count(div) > 0]')
         for effect_element in effect_elements:
             skill_effect = await effect_element.xpath('./div')
-            if len(skill_effect) == 0: # 检查是否为空
-                continue
             effect = await page.evaluate('(element) => element.innerText', skill_effect[0])
             effects.append(effect)
         return effects
 
 
 async def chara_data(page, idx, name):
+    element = await get_chara_data(page, "屬性", name, 'infoelem')
     guild = await find_td_text_by_th_text(page, "公會")
     birthday = await find_td_text_by_th_text(page, "生日")
     age = await find_td_text_by_th_text(page, "年齡")
@@ -121,6 +142,7 @@ async def chara_data(page, idx, name):
     Info.replace(
         id=idx,
         name = name,
+        element = element,
         guild = guild,
         birthday = birthday,
         age = age,
