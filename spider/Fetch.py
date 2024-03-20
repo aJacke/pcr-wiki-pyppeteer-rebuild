@@ -2,44 +2,6 @@ import pyppeteer
 import asyncio
 from data import *
 
-async def find_td_text_by_th_text(page, text_to_find):
-    # 使用JavaScript来查找包含特定文本的<th>元素
-    th_element = await page.evaluateHandle('''(textToFind) => {
-        const thElements = document.querySelectorAll('th');
-        for (const th of thElements) {
-            if (th.textContent.trim() === textToFind) {
-                return th;
-            }
-        }
-        return null;
-    }''', text_to_find)
-
-    if th_element:
-        # 找到包含特定标题的<th>元素，然后找到其父级<tr>元素
-        tr_element = await page.evaluateHandle('(th) => th.closest("tr")', th_element)
-        
-        if tr_element:
-            # 找到<tr>元素后，可以继续查找包含内容的<td>元素
-            td_element = await page.evaluateHandle('(tr) => tr.querySelector("td").textContent', tr_element)
-
-            if td_element:
-                # 如果找到<td>元素，获取其文本内容
-                td_text = await td_element.jsonValue()
-                return td_text
-    return None
-
-async def extract_text_after_heading(page, heading_text):
-    # 使用XPath来定位包含指定标题文本的元素
-    heading_element = await page.xpath(f'//h3[contains(text(), "{heading_text}")]')
-
-    if heading_element:
-        # 如果找到包含指定标题文本的元素，使用page.evaluate来获取文本内容
-        extracted_text = await page.evaluate('(element) => element.nextSibling.textContent.trim()', heading_element[0])
-
-        if extracted_text:
-            return extracted_text
-    return None
-
 async def extract_skill_icons_text(page, section_heading):
     result = []  # 创建一个空列表，用于存储提取的文本
     
@@ -70,8 +32,13 @@ async def extract_skill_icons_text(page, section_heading):
     
     return result  # 返回存储的结果列表
 
-async def get_chara_data(page, text, name, key): # 有剩下的有空在做吧
+async def get_chara_data(page, text, name, key):
     element = await page.xpath(f'//th[text()="{text}"]/..')
+    if key == 'introduce':
+        element = await page.xpath('//h3[text()="簡介"]/..')
+        introduce = await page.evaluate('(element) => element.innerText', element[0])
+        introduce = introduce.split('\n')[1]
+        return introduce
     if len(element) == 0:
         return 0
     if key == 'infoelem':
@@ -91,6 +58,21 @@ async def get_chara_data(page, text, name, key): # 有剩下的有空在做吧
         else:
             infoelem = "未知属性"
         return infoelem
+    keylist = [
+        'guild',
+        'birthday',
+        'age',
+        'height',
+        'weight',
+        'blood_type',
+        'race',
+        'hobby',
+        'cv'
+    ]
+    if key in keylist:
+        elem = await element[0].xpath('td')
+        elem = await page.evaluate('(element) => element.innerText', elem[0])
+        return elem
 
 async def get_skill_data(page, text, name, key):
     element = await page.xpath(f'//div[text()="{text}"]/../..')
@@ -120,19 +102,44 @@ async def get_skill_data(page, text, name, key):
             effects.append(effect)
         return effects
 
+async def get_kizuna_data(page, name):
+    elements = await page.xpath('//table[starts-with(@class,"chara-table")]/tbody') # /td/div/div
+    namelist = []
+    kzn = []
+    for element in elements:
+        name = await element.xpath('tr/th')
+        name = await page.evaluate('(element) => element.innerText', name[0])
+        if name in namelist:
+            continue
+        namelist.append(name)
+        kzn_lists = await element.xpath('tr/td/..')
+        for kzn_list in kzn_lists:
+            episode = await kzn_list.xpath('th')
+            effect = await kzn_list.xpath('td')
+            episode = await page.evaluate('(element) => element.innerText', episode[0])
+            episode = episode.split('\t')[0]
+            effect = await page.evaluate('(element) => element.innerText', effect[0])
+            effect = effect.split('\n')
+            kzndata = []
+            kzndata.append(name)
+            kzndata.append(episode)
+            kzndata.append(effect)
+            kzn.append(kzndata)
+    return kzn
 
+# 之后可能会慢慢做的更精简一点 现在先保证能用
 async def chara_data(page, idx, name):
     element = await get_chara_data(page, "屬性", name, 'infoelem')
-    guild = await find_td_text_by_th_text(page, "公會")
-    birthday = await find_td_text_by_th_text(page, "生日")
-    age = await find_td_text_by_th_text(page, "年齡")
-    height = await find_td_text_by_th_text(page, "身高")
-    weight = await find_td_text_by_th_text(page, "體重")
-    blood_type = await find_td_text_by_th_text(page, "血型")
-    race = await find_td_text_by_th_text(page, "種族")
-    hobby = await find_td_text_by_th_text(page, "喜好")
-    cv = await find_td_text_by_th_text(page, "聲優")
-    introduce = await extract_text_after_heading(page, "簡介")
+    guild = await get_chara_data(page, "公會", name, 'guild')
+    birthday = await get_chara_data(page, "生日", name, 'birthday')
+    age = await get_chara_data(page, "年齡", name, 'age')
+    height = await get_chara_data(page, "身高", name, 'height')
+    weight = await get_chara_data(page, "體重", name, 'weight')
+    blood_type = await get_chara_data(page, "血型", name, 'blood_type')
+    race = await get_chara_data(page, "種族", name, 'race')
+    hobby = await get_chara_data(page, "喜好", name, 'hobby')
+    cv = await get_chara_data(page, "聲優", name, 'cv')
+    introduce = await get_chara_data(page, "簡介", name, 'introduce')
     start = await extract_skill_icons_text(page, '起手')
     loop = await extract_skill_icons_text(page, '循環')
 
@@ -177,3 +184,21 @@ async def skill_data(page, idx, name):
             num = num,
             effect = effect,
         ).execute()
+
+async def kizuna_data(page, idx, name):
+    kzndata = await get_kizuna_data(page, name)
+    i = 0
+    Kizuna.delete().where(Kizuna.id == idx).execute()
+    while (i < len(kzndata)):
+        name = kzndata[i][0]
+        episode = kzndata[i][1]
+        effect = (kzndata[i][2])
+        
+        Kizuna.replace(
+            id = idx,   
+            name = name,
+            episode = episode,
+            effect = effect,
+        ).execute()
+
+        i += 1
