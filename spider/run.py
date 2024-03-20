@@ -88,8 +88,8 @@ async def main():
                         print(f'没找到{name}的数据。若有需要，请提issue')
                         continue
                     
-            # await chara_data(page, idx, name)
-            # await skill_data(page, idx, name)
+            await chara_data(page, idx, name)
+            await skill_data(page, idx, name)
             await kizuna_data(page, idx, name)
 
 asyncio.get_event_loop().run_until_complete(main())
