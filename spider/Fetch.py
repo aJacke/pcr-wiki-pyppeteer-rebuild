@@ -102,7 +102,7 @@ async def get_skill_data(page, text, name, key):
             effects.append(effect)
         return effects
 
-async def get_kizuna_data(page, name):
+async def get_kizuna_data(page):
     elements = await page.xpath('//table[starts-with(@class,"chara-table")]/tbody') # /td/div/div
     namelist = []
     kzn = []
@@ -127,7 +127,38 @@ async def get_kizuna_data(page, name):
             kzn.append(kzndata)
     return kzn
 
-# 之后可能会慢慢做的更精简一点 现在先保证能用
+async def get_uniquei_data(page, text): # 给专武2留个口子(bushi)
+    element = await page.xpath('//h3[text()="專武 1"]/../div')
+    name = await element[0].xpath('h2')
+    name = await page.evaluate('(element) => element.innerText', name[0])
+    img = await element[0].xpath('div//img')
+    src_attribute = await img[0].getProperty('src')
+    img_src = await src_attribute.jsonValue()
+    num = img_src.split('/static/images/equipment/icon_equipment_')[1].split('.png')[0]
+    description = await page.xpath('//p')
+    description = await page.evaluate('(element) => element.innerText', description[0])
+    list = [num, name, description]
+    return list
+
+async def get_props_data(page, text):
+    element = await page.xpath('//h3[text()="專武 1"]/../div')
+    propertys = await element[0].xpath('div//span[starts-with(@class, "title")]')
+    props_list = []
+    for property in propertys:
+        text = await property.xpath('../span')
+        text = await page.evaluate('(element) => element.innerText', text[1])
+        property = await page.evaluate('(element) => element.innerText', property)
+        base_value = text.split('(')[0].split(' ')[0]
+        max_value = text.split('(')[1].split(')')[0]
+        propList = []
+        propList.append(property)
+        propList.append(base_value)
+        propList.append(max_value)
+        props_list.append(propList)
+    return props_list
+
+
+# 之后可能会慢慢做的更精简一点 比如别调用多次之类的 现在先保证能用
 async def chara_data(page, idx, name):
     element = await get_chara_data(page, "屬性", name, 'infoelem')
     guild = await get_chara_data(page, "公會", name, 'guild')
@@ -186,13 +217,13 @@ async def skill_data(page, idx, name):
         ).execute()
 
 async def kizuna_data(page, idx, name):
-    kzndata = await get_kizuna_data(page, name)
+    kzndata = await get_kizuna_data(page)
     i = 0
     Kizuna.delete().where(Kizuna.id == idx).execute()
     while (i < len(kzndata)):
         name = kzndata[i][0]
         episode = kzndata[i][1]
-        effect = (kzndata[i][2])
+        effect = kzndata[i][2]
         
         Kizuna.replace(
             id = idx,   
@@ -201,4 +232,34 @@ async def kizuna_data(page, idx, name):
             effect = effect,
         ).execute()
 
+        i += 1
+
+async def uniquei_data(page, idx, name):
+    uniquei_list = await get_uniquei_data(page, 'null')
+    name = uniquei_list[1]
+    num = uniquei_list[0]
+    description = uniquei_list[2]
+    Uniquei.delete().where(Uniquei.id == idx).execute()
+    Uniquei.replace(
+        id = idx,   
+        name = name,
+        num = num,
+        description = description,
+    ).execute()
+
+async def props_data(page, idx, name):
+    props_list = await get_props_data(page, 'null')
+    i = 0
+    Props.delete().where(Props.id == idx).execute()
+    while (i < len(props_list)):
+        property = props_list[i][0]
+        base_value = props_list[i][1]
+        max_value = props_list[i][2]
+        Props.replace(
+            id = idx,
+            property = property,
+            base_value = base_value,
+            max_value = max_value,
+        ).execute()
+    
         i += 1

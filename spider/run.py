@@ -29,8 +29,8 @@ UnavailableChara = {
 }
 
 # 改这里控制爬虫范围
-head = 1258
-end = 1300
+head = 1800
+end = 1900
 # 等待时长 网络较慢时可以调高 但不能太低
 waittime = 20
 # 让我看看爬虫过程(True/False)
@@ -91,5 +91,10 @@ async def main():
             await chara_data(page, idx, name)
             await skill_data(page, idx, name)
             await kizuna_data(page, idx, name)
+            try:
+                await uniquei_data(page, idx, name)
+                await props_data(page, idx, name)
+            except Exception as e:
+                print(f'{name_zh},该角色暂未找到专武数据。{e}')
 
 asyncio.get_event_loop().run_until_complete(main())
