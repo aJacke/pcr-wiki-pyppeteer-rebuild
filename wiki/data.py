@@ -26,8 +26,8 @@ def get_file_md5():
     return myhash.hexdigest()
 
 def custom_sorted(x,y):
-    order = ['必殺技','必殺技+','技能1','專武強化技能1','技能2','EX技能','EX技能+','特殊必殺技','特殊技能1','特殊技能1+','特殊技能2','特殊技能3']
-    # order = ['必殺技', '必殺技+', '技能1', '專武強化技能1', '技能2', '專武強化技能2', 'EX技能', 'EX技能+','特殊技能1','特殊技能1+','特殊技能2','特殊技能3'] 图书馆好像还没专2技能的数据，先放着
+    # order = ['必殺技','必殺技+','技能1','專武強化技能1','技能2','EX技能','EX技能+','特殊必殺技','特殊技能1','特殊技能1+','特殊技能2','特殊技能3']
+    order = ['必殺技', '必殺技+', '技能1', '專武強化技能1', '技能2', '專武強化技能2', 'EX技能', 'EX技能+','特殊技能1','特殊技能1+','特殊技能2','特殊技能3']
     if order.index(x['type']) < order.index(y['type']):
         return -1
     if order.index(x['type']) > order.index(y['type']):
@@ -109,16 +109,27 @@ def get_skill(id):
 def get_uniquei(id):
     query = Uniquei.get_or_none(Uniquei.id==id)
     if query:
+        query = Uniquei.select().where(Uniquei.id==id)
+        numlist = []
+        namelist = []
+        descriptionlist = []
+        for record in query:
+            numlist.append(record.num)
+            namelist.append(record.name)
+            descriptionlist.append(record.description)
         skill = Skill.get(Skill.id==id,Skill.type=='技能1')
         skill1 = Skill.get(Skill.id==id,Skill.type=='專武強化技能1')
-        e_icon = resize_icon(query.num,types='equipment')
-        prop = Props.select().where(Props.id==id)
+        num1= numlist[0]
+        name1 = namelist[0]
+        e_icon1 = resize_icon(num1,types='equipment')
+        prop1 = Props.select().where(Props.id==num1)
+        description1 = descriptionlist[0]
         msg = ''
-        msg += f'\n{query.name}\n'
-        msg += f'{e_icon}\n'
-        msg += f'{query.description}'
+        msg += f'\n{name1}\n'
+        msg += f'{e_icon1}\n'
+        msg += f'{description1}'
         msg += '\n======================\n'
-        for i in prop:
+        for i in prop1:
             msg += f'{i.property}：{i.base_value}-{i.max_value}\n'
         msg += '======================\n'
         msg += f'{skill.type}:{skill.name}\n'
@@ -135,6 +146,39 @@ def get_uniquei(id):
         effect1 = skill1.effect.strip( "[']" )
         msg += '效果：\n'
         for e in effect1.split("', '"):
+            msg += f'{e}'
+        try:
+            num2 = numlist[1]
+        except:
+            return convert(msg, 'zh-hans')
+        name2 = namelist[1]
+        description2 = descriptionlist[1]
+        e_icon2 = resize_icon(num2,types='equipment')
+        prop2 = Props.select().where(Props.id==num2)
+        skill2 = Skill.get(Skill.id==id,Skill.type=='技能2')
+        skill3 = Skill.get(Skill.id==id,Skill.type=='專武強化技能2')
+        msg += '\n======================'
+        msg += f'\n{name2}\n'
+        msg += f'{e_icon2}\n'
+        msg += f'{description2}'
+        msg += '\n======================\n'
+        for i in prop2:
+            msg += f'{i.property}：{i.base_value}-{i.max_value}\n'
+        msg += '======================\n'
+        msg += f'{skill2.type}:{skill2.name}\n'
+        msg += f'{resize_icon(skill2.num)}\n'
+        msg += f'描述：\n{skill2.description}\n'
+        effect = skill2.effect.strip( "[']" )
+        msg += '效果：\n'
+        for e in effect.split("', '"):
+            msg += f'{e}'
+        msg += '\n======================\n'
+        msg += f'{skill3.type}:{skill3.name}\n'
+        msg += f'{resize_icon(skill3.num)}\n'
+        msg += f'描述：\n{skill3.description}\n'
+        effect2 = skill3.effect.strip( "[']" )
+        msg += '效果：\n'
+        for e in effect2.split("', '"):
             msg += f'{e}'
         return convert(msg, 'zh-hans')
     else:
