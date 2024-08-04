@@ -234,6 +234,22 @@ async def kizuna_data(page, idx, name):
 
         i += 1
 
+async def props_data(page, idx, uni, num):
+    props_list = await get_props_data(page, uni)
+    i = 0
+    Props.delete().where(Props.id == idx).execute()
+    while (i < len(props_list)):
+        property = props_list[i][0]
+        base_value = props_list[i][1]
+        max_value = props_list[i][2]
+        Props.replace(
+            id = num,
+            property = property,
+            base_value = base_value,
+            max_value = max_value,
+        ).execute()
+        i += 1
+
 async def uniquei_data(page, idx, name):
     Nofind = []
     Uniquei.delete().where(Uniquei.id == idx).execute()
@@ -256,19 +272,3 @@ async def uniquei_data(page, idx, name):
         ).execute()
         await props_data(page, idx, uni, num)
     return Nofind
-
-async def props_data(page, idx, uni, num):
-    props_list = await get_props_data(page, uni)
-    i = 0
-    Props.delete().where(Props.id == idx).execute()
-    while (i < len(props_list)):
-        property = props_list[i][0]
-        base_value = props_list[i][1]
-        max_value = props_list[i][2]
-        Props.replace(
-            id = num,
-            property = property,
-            base_value = base_value,
-            max_value = max_value,
-        ).execute()
-        i += 1
