@@ -4,7 +4,7 @@
 
 数据搬运于[蘭德索爾圖書館](https://pcredivewiki.tw/)，图片资源来源[干炸里脊资源站](https://redive.estertion.win/)
 
-fork于[pcr-wiki插件](https://github.com/pcrbot/pcr-wiki)，由ai辅助重构爬虫，目前还没重构完
+fork于[pcr-wiki插件](https://github.com/pcrbot/pcr-wiki)
 
 ## 功能
 
@@ -12,9 +12,9 @@ fork于[pcr-wiki插件](https://github.com/pcrbot/pcr-wiki)，由ai辅助重构�
 - **[@bot技能ue] 角色技能**：查询角色技能
 - **[@bot专武ue] 角色专武**：查询角色专武
 - **[@bot羁绊ue] 角色羁绊**：查询角色羁绊
-- **更新wiki**：更新wiki数据
 - **启用wiki**：启用wiki
 - **禁用wiki**：禁用wiki
+- <s>**更新wiki**：更新wiki数据   这个怎么说呢，我还不知道怎么实现</s>
 
 ## 部署
 
