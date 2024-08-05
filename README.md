@@ -48,7 +48,7 @@ fork于[pcr-wiki插件](https://github.com/pcrbot/pcr-wiki)
 
 3. 打开`run.py`按照注释修改对应处（第32、33行），打开`data.py`按照注释修改第3行
 
-4. 将你最新的`_pcr_data.py`复制到`spider`文件夹下替换（保证`spider/_pcr_data.py`里有你需要更新的id信息）
+4. 将你最新的`_pcr_data.py`复制到`spider`文件夹下替换（保证`spider/_pcr_data.py`里有你需要更新的id信息）<s>其实正常情况下，spider文件夹内自带了`_pcr_data.py`且会自动更新，不想复制也能`git pull`就是了</s>
 
 5. 运行`run.py`
 
