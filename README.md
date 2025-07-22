@@ -6,6 +6,8 @@
 
 fork于[pcr-wiki插件](https://github.com/pcrbot/pcr-wiki)
 
+<span style="color: gray;">摆烂太久就会有大佬做出来(bushi)指路:https://github.com/SonderXiaoming/kanna_note</span>
+
 ## 功能
 
 - **[@bot简介ue] 角色简介**：查询角色简介
